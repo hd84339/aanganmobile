@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://aangan-2o34.onrender.com';
 
-const api = axios.create({
+export const api = axios.create({
     baseURL: API_URL,
     timeout: 10000,
 });
