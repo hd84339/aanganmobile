@@ -1,22 +1,21 @@
 import { useAuthStore } from '@/store/authStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function LoginScreen() {
+export default function SignupScreen() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState('');
 
     const login = useAuthStore((state) => state.login);
 
-    const handleLogin = async () => {
-        if (!email || !password) {
+    const handleSignup = async () => {
+        if (!name || !email || !password) {
             setError('Please fill in all fields');
             return;
         }
@@ -25,44 +24,16 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            // In a real app, this would call your backend's regular login endpoint
-            // const response = await api.post('/auth/login', { email, password });
-            // await login(response.data.token);
-
-            // For now, simulate a login based on instructions
-            await login('test_token_for_now');
-            router.replace('/(app)/dashboard');
+            // Typically:
+            // const response = await authService.register({ name, email, password });
+            // await login(response.token);
+            await login('test_registration_token');
+            // After signup, they might need to verify their email
+            router.replace('/(auth)/verify');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to login');
+            setError(err.response?.data?.message || 'Failed to create account');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        setGoogleLoading(true);
-        setError('');
-
-        try {
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
-            const idToken = userInfo.data?.idToken;
-
-            if (idToken) {
-                // Here you would call your backend endpoint for Google auth
-                // const response = await authService.googleLogin(idToken);
-                // await login(response.token);
-                await login('google_test_token');
-                router.replace('/(app)/dashboard');
-            }
-        } catch (err: any) {
-            console.log('Google Sign-In Error:', err);
-            // Let's not show an error if they just cancelled the modal
-            if (err.code !== 'SIGN_IN_CANCELLED') {
-                setError('Google sign-in failed. Please try again.');
-            }
-        } finally {
-            setGoogleLoading(false);
         }
     };
 
@@ -73,14 +44,28 @@ export default function LoginScreen() {
                 style={styles.keyboardView}
             >
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                        <MaterialCommunityIcons name="arrow-left" size={24} color="#111827" />
+                    </TouchableOpacity>
+
                     <View style={styles.header}>
-                        <MaterialCommunityIcons name="home-heart" size={64} color="#4f46e5" />
-                        <Text style={styles.title}>Aangan</Text>
-                        <Text style={styles.subtitle}>Welcome back! Please login to your account.</Text>
+                        <Text style={styles.title}>Create Account</Text>
+                        <Text style={styles.subtitle}>Join Aangan to find roommates and rooms near you.</Text>
                     </View>
 
                     <View style={styles.form}>
                         {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+                        <View style={styles.inputContainer}>
+                            <MaterialCommunityIcons name="account-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Full Name"
+                                value={name}
+                                onChangeText={setName}
+                                autoCapitalize="words"
+                            />
+                        </View>
 
                         <View style={styles.inputContainer}>
                             <MaterialCommunityIcons name="email-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
@@ -105,48 +90,23 @@ export default function LoginScreen() {
                             />
                         </View>
 
-                        <TouchableOpacity style={styles.forgotPassword}>
-                            <Text style={styles.forgotText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-
                         <TouchableOpacity
                             style={[styles.primaryButton, loading && styles.disabledButton]}
-                            onPress={handleLogin}
+                            onPress={handleSignup}
                             disabled={loading}
                         >
                             {loading ? (
                                 <ActivityIndicator color="#ffffff" />
                             ) : (
-                                <Text style={styles.primaryButtonText}>Sign In</Text>
-                            )}
-                        </TouchableOpacity>
-
-                        <View style={styles.dividerContainer}>
-                            <View style={styles.divider} />
-                            <Text style={styles.dividerText}>OR</Text>
-                            <View style={styles.divider} />
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.googleButton, googleLoading && styles.disabledButton]}
-                            onPress={handleGoogleLogin}
-                            disabled={googleLoading}
-                        >
-                            {googleLoading ? (
-                                <ActivityIndicator color="#333333" />
-                            ) : (
-                                <>
-                                    <MaterialCommunityIcons name="google" size={20} color="#db4437" style={styles.googleIcon} />
-                                    <Text style={styles.googleButtonText}>Continue with Google</Text>
-                                </>
+                                <Text style={styles.primaryButtonText}>Sign Up</Text>
                             )}
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.footer}>
-                        <Text style={styles.footerText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-                            <Text style={styles.linkText}>Sign Up</Text>
+                        <Text style={styles.footerText}>Already have an account? </Text>
+                        <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                            <Text style={styles.linkText}>Log In</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -165,25 +125,28 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        justifyContent: 'center',
         padding: 24,
     },
+    backButton: {
+        marginBottom: 20,
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+    },
     header: {
-        alignItems: 'center',
         marginBottom: 40,
     },
     title: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#4f46e5',
-        marginTop: 16,
+        color: '#111827',
         marginBottom: 8,
-        letterSpacing: 1,
+        letterSpacing: 0.5,
     },
     subtitle: {
         fontSize: 16,
         color: '#6b7280',
-        textAlign: 'center',
+        lineHeight: 24,
     },
     form: {
         width: '100%',
@@ -213,21 +176,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#111827',
     },
-    forgotPassword: {
-        alignSelf: 'flex-end',
-        marginBottom: 24,
-    },
-    forgotText: {
-        color: '#4f46e5',
-        fontWeight: '600',
-    },
     primaryButton: {
         backgroundColor: '#4f46e5',
         borderRadius: 12,
         height: 56,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
+        marginTop: 8,
         shadowColor: '#4f46e5',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
@@ -241,40 +196,6 @@ const styles = StyleSheet.create({
     },
     disabledButton: {
         opacity: 0.7,
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    divider: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#e5e7eb',
-    },
-    dividerText: {
-        color: '#9ca3af',
-        paddingHorizontal: 16,
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    googleButton: {
-        flexDirection: 'row',
-        backgroundColor: '#ffffff',
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 12,
-        height: 56,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    googleIcon: {
-        marginRight: 12,
-    },
-    googleButtonText: {
-        color: '#374151',
-        fontSize: 16,
-        fontWeight: '600',
     },
     footer: {
         flexDirection: 'row',
