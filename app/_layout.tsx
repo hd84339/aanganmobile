@@ -12,7 +12,7 @@ export const unstable_settings = {
   anchor: '(auth)',
 };
 
-export default function RootLayout() {
+const RootLayout = () => {
   const colorScheme = useColorScheme();
   const { checkAuth, loading, token } = useAuthStore();
 
@@ -42,4 +42,6 @@ export default function RootLayout() {
       </ThemeProvider>
     </GoogleAuthWrapper>
   );
-}
+};
+
+export default RootLayout;

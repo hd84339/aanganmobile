@@ -1,12 +1,19 @@
 import { useAuthStore } from '@/store/authStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function LoginScreen() {
+// Defensive import for native module
+let GoogleSignin: any;
+try {
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+} catch (e) {
+    GoogleSignin = null;
+}
+
+const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,13 +32,9 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            // In a real app, this would call your backend's regular login endpoint
-            // const response = await api.post('/auth/login', { email, password });
-            // await login(response.data.token);
-
             // For now, simulate a login based on instructions
             await login('test_token_for_now');
-            router.replace('/(app)/dashboard');
+            router.replace('/(app)/dashboard' as any);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to login');
         } finally {
@@ -40,6 +43,11 @@ export default function LoginScreen() {
     };
 
     const handleGoogleLogin = async () => {
+        if (!GoogleSignin) {
+            setError('Google Sign-In is only available on physical devices with a development build. Please use email/password for testing.');
+            return;
+        }
+
         setGoogleLoading(true);
         setError('');
 
@@ -49,17 +57,13 @@ export default function LoginScreen() {
             const idToken = userInfo.data?.idToken;
 
             if (idToken) {
-                // Here you would call your backend endpoint for Google auth
-                // const response = await authService.googleLogin(idToken);
-                // await login(response.token);
                 await login('google_test_token');
-                router.replace('/(app)/dashboard');
+                router.replace('/(app)/dashboard' as any);
             }
         } catch (err: any) {
             console.log('Google Sign-In Error:', err);
-            // Let's not show an error if they just cancelled the modal
             if (err.code !== 'SIGN_IN_CANCELLED') {
-                setError('Google sign-in failed. Please try again.');
+                setError('Google sign-in failed. Please try again or use email/password.');
             }
         } finally {
             setGoogleLoading(false);
@@ -145,7 +149,7 @@ export default function LoginScreen() {
 
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+                        <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)}>
                             <Text style={styles.linkText}>Sign Up</Text>
                         </TouchableOpacity>
                     </View>
@@ -153,7 +157,9 @@ export default function LoginScreen() {
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
-}
+};
+
+export default LoginScreen;
 
 const styles = StyleSheet.create({
     container: {
