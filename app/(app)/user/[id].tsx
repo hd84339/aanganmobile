@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     verifiedBadge: {
-        paddingtop: 4,
+        paddingTop: 4,
     },
     infoGrid: {
         flexDirection: 'row',

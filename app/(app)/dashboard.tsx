@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/utils/colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,7 +54,10 @@ export default function DashboardScreen() {
                         <Text style={styles.welcomeText}>Hello,</Text>
                         <Text style={styles.userName}>{user?.name || 'User'} 👋</Text>
                     </View>
-                    <TouchableOpacity style={styles.notificationBtn}>
+                    <TouchableOpacity
+                        style={styles.notificationBtn}
+                        onPress={() => router.push('/(app)/notifications' as any)}
+                    >
                         <MaterialCommunityIcons name="bell-outline" size={24} color={colors.neutral[700]} />
                         <View style={styles.badge} />
                     </TouchableOpacity>
@@ -79,7 +83,10 @@ export default function DashboardScreen() {
 
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
                 <View style={styles.actionsGrid}>
-                    <TouchableOpacity style={styles.actionItem}>
+                    <TouchableOpacity
+                        style={styles.actionItem}
+                        onPress={() => router.push('/(app)/roommates' as any)}
+                    >
                         <View style={[styles.actionIcon, { backgroundColor: '#eef2ff' }]}>
                             <MaterialCommunityIcons name="account-search" size={24} color="#4f46e5" />
                         </View>
@@ -120,7 +127,6 @@ export default function DashboardScreen() {
                 </Card>
 
                 <Button
-                    variant="outline"
                     title="Logout"
                     onPress={logout}
                     style={styles.logoutBtn}
