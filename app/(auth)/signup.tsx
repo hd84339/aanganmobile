@@ -5,11 +5,20 @@ import React, { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// Defensive import for native module
+let GoogleSignin: any;
+try {
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+} catch (e) {
+    GoogleSignin = null;
+}
+
 export default function SignupScreen() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState('');
 
     const login = useAuthStore((state) => state.login);
@@ -34,6 +43,35 @@ export default function SignupScreen() {
             setError(err.response?.data?.message || 'Failed to create account');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleSignup = async () => {
+        if (!GoogleSignin) {
+            setError('Google Sign-In is only available on physical devices with a development build. Please use email/password for testing.');
+            return;
+        }
+
+        setGoogleLoading(true);
+        setError('');
+
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            const idToken = userInfo.data?.idToken;
+
+            if (idToken) {
+                // Here you would call your backend endpoint for Google auth
+                await login('google_test_token');
+                router.replace('/(app)/dashboard' as any);
+            }
+        } catch (err: any) {
+            console.log('Google Sign-In Error:', err);
+            if (err.code !== 'SIGN_IN_CANCELLED') {
+                setError('Google sign-up failed. Please try again or use email/password.');
+            }
+        } finally {
+            setGoogleLoading(false);
         }
     };
 
@@ -101,11 +139,32 @@ export default function SignupScreen() {
                                 <Text style={styles.primaryButtonText}>Sign Up</Text>
                             )}
                         </TouchableOpacity>
+
+                        <View style={styles.dividerContainer}>
+                            <View style={styles.divider} />
+                            <Text style={styles.dividerText}>OR</Text>
+                            <View style={styles.divider} />
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.googleButton, googleLoading && styles.disabledButton]}
+                            onPress={handleGoogleSignup}
+                            disabled={googleLoading}
+                        >
+                            {googleLoading ? (
+                                <ActivityIndicator color="#333333" />
+                            ) : (
+                                <>
+                                    <MaterialCommunityIcons name="google" size={20} color="#db4437" style={styles.googleIcon} />
+                                    <Text style={styles.googleButtonText}>Sign Up with Google</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
                     </View>
 
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Already have an account? </Text>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                        <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
                             <Text style={styles.linkText}>Log In</Text>
                         </TouchableOpacity>
                     </View>
@@ -196,6 +255,41 @@ const styles = StyleSheet.create({
     },
     disabledButton: {
         opacity: 0.7,
+    },
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 24,
+        marginTop: 16,
+    },
+    divider: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#e5e7eb',
+    },
+    dividerText: {
+        color: '#9ca3af',
+        paddingHorizontal: 16,
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    googleButton: {
+        flexDirection: 'row',
+        backgroundColor: '#ffffff',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        borderRadius: 12,
+        height: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    googleIcon: {
+        marginRight: 12,
+    },
+    googleButtonText: {
+        color: '#374151',
+        fontSize: 16,
+        fontWeight: '600',
     },
     footer: {
         flexDirection: 'row',
