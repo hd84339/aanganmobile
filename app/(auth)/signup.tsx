@@ -2,10 +2,9 @@ import { useAuthStore } from '@/store/authStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Defensive import for native module
 let GoogleSignin: any;
 try {
     GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
@@ -14,41 +13,14 @@ try {
 }
 
 export default function SignupScreen() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState('');
 
     const login = useAuthStore((state) => state.login);
 
-    const handleSignup = async () => {
-        if (!name || !email || !password) {
-            setError('Please fill in all fields');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-
-        try {
-            // Typically:
-            // const response = await authService.register({ name, email, password });
-            // await login(response.token);
-            await login('test_registration_token');
-            // After signup, they might need to verify their email
-            router.replace('/(auth)/verify');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to create account');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleGoogleSignup = async () => {
         if (!GoogleSignin) {
-            setError('Google Sign-In is only available on physical devices with a development build. Please use email/password for testing.');
+            setError('Google Sign-In is only available on physical devices with a development build.');
             return;
         }
 
@@ -61,14 +33,13 @@ export default function SignupScreen() {
             const idToken = userInfo.data?.idToken;
 
             if (idToken) {
-                // Here you would call your backend endpoint for Google auth
                 await login('google_test_token');
                 router.replace('/(app)/dashboard' as any);
             }
         } catch (err: any) {
             console.log('Google Sign-In Error:', err);
             if (err.code !== 'SIGN_IN_CANCELLED') {
-                setError('Google sign-up failed. Please try again or use email/password.');
+                setError('Google sign-up failed. Please try again.');
             }
         } finally {
             setGoogleLoading(false);
@@ -77,99 +48,42 @@ export default function SignupScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
-                <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <MaterialCommunityIcons name="arrow-left" size={24} color="#111827" />
+            <View style={styles.content}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <MaterialCommunityIcons name="arrow-left" size={24} color="#111827" />
+                </TouchableOpacity>
+
+                <View style={styles.header}>
+                    <Text style={styles.title}>Create Account</Text>
+                    <Text style={styles.subtitle}>Join Aangan to find roommates and rooms near you with a single tap.</Text>
+                </View>
+
+                <View style={styles.form}>
+                    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+                    <TouchableOpacity
+                        style={[styles.googleButton, googleLoading && styles.disabledButton]}
+                        onPress={handleGoogleSignup}
+                        disabled={googleLoading}
+                    >
+                        {googleLoading ? (
+                            <ActivityIndicator color="#333333" />
+                        ) : (
+                            <>
+                                <MaterialCommunityIcons name="google" size={24} color="#db4437" style={styles.googleIcon} />
+                                <Text style={styles.googleButtonText}>Sign Up with Google</Text>
+                            </>
+                        )}
                     </TouchableOpacity>
+                </View>
 
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Create Account</Text>
-                        <Text style={styles.subtitle}>Join Aangan to find roommates and rooms near you.</Text>
-                    </View>
-
-                    <View style={styles.form}>
-                        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-                        <View style={styles.inputContainer}>
-                            <MaterialCommunityIcons name="account-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Full Name"
-                                value={name}
-                                onChangeText={setName}
-                                autoCapitalize="words"
-                            />
-                        </View>
-
-                        <View style={styles.inputContainer}>
-                            <MaterialCommunityIcons name="email-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Email Address"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                            />
-                        </View>
-
-                        <View style={styles.inputContainer}>
-                            <MaterialCommunityIcons name="lock-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Password"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.primaryButton, loading && styles.disabledButton]}
-                            onPress={handleSignup}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#ffffff" />
-                            ) : (
-                                <Text style={styles.primaryButtonText}>Sign Up</Text>
-                            )}
-                        </TouchableOpacity>
-
-                        <View style={styles.dividerContainer}>
-                            <View style={styles.divider} />
-                            <Text style={styles.dividerText}>OR</Text>
-                            <View style={styles.divider} />
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.googleButton, googleLoading && styles.disabledButton]}
-                            onPress={handleGoogleSignup}
-                            disabled={googleLoading}
-                        >
-                            {googleLoading ? (
-                                <ActivityIndicator color="#333333" />
-                            ) : (
-                                <>
-                                    <MaterialCommunityIcons name="google" size={20} color="#db4437" style={styles.googleIcon} />
-                                    <Text style={styles.googleButtonText}>Sign Up with Google</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Already have an account? </Text>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
-                            <Text style={styles.linkText}>Log In</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>Already have an account? </Text>
+                    <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
+                        <Text style={styles.linkText}>Log In</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
@@ -179,27 +93,29 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#ffffff',
     },
-    keyboardView: {
+    content: {
         flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
         padding: 24,
+        justifyContent: 'center',
     },
     backButton: {
-        marginBottom: 20,
+        position: 'absolute',
+        top: 24,
+        left: 24,
         width: 40,
         height: 40,
         justifyContent: 'center',
+        zIndex: 10,
     },
     header: {
-        marginBottom: 40,
+        marginBottom: 60,
+        marginTop: 40,
     },
     title: {
-        fontSize: 32,
+        fontSize: 34,
         fontWeight: '800',
         color: '#111827',
-        marginBottom: 8,
+        marginBottom: 12,
         letterSpacing: 0.5,
     },
     subtitle: {
@@ -209,92 +125,43 @@ const styles = StyleSheet.create({
     },
     form: {
         width: '100%',
+        marginBottom: 40,
     },
     errorText: {
         color: '#ef4444',
         marginBottom: 16,
         textAlign: 'center',
     },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f9fafb',
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 12,
-        marginBottom: 16,
-        paddingHorizontal: 16,
-        height: 56,
-    },
-    inputIcon: {
-        marginRight: 12,
-    },
-    input: {
-        flex: 1,
-        height: '100%',
-        fontSize: 16,
-        color: '#111827',
-    },
-    primaryButton: {
-        backgroundColor: '#4f46e5',
-        borderRadius: 12,
-        height: 56,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 8,
-        shadowColor: '#4f46e5',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    primaryButtonText: {
-        color: '#ffffff',
-        fontSize: 16,
-        fontWeight: '700',
-    },
     disabledButton: {
         opacity: 0.7,
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 24,
-        marginTop: 16,
-    },
-    divider: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#e5e7eb',
-    },
-    dividerText: {
-        color: '#9ca3af',
-        paddingHorizontal: 16,
-        fontSize: 14,
-        fontWeight: '600',
     },
     googleButton: {
         flexDirection: 'row',
         backgroundColor: '#ffffff',
         borderWidth: 1,
         borderColor: '#e5e7eb',
-        borderRadius: 12,
-        height: 56,
+        borderRadius: 16,
+        height: 60,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
     googleIcon: {
         marginRight: 12,
     },
     googleButtonText: {
         color: '#374151',
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: '600',
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 40,
+        marginTop: 20,
     },
     footerText: {
         color: '#6b7280',
